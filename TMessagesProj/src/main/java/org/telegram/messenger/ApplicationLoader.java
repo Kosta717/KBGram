@@ -245,6 +245,13 @@ public class ApplicationLoader extends Application {
 
         SharedConfig.loadConfig();
         SharedPrefsHelper.init(applicationContext);
+
+        // KBGram: Initialize anti-censorship features
+        org.telegram.messenger.CensorshipDetector.loadSettings();
+        if (org.telegram.messenger.CensorshipDetector.isEnabled()) {
+            org.telegram.messenger.CensorshipDetector.checkIfNeeded();
+        }
+
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
             UserConfig.getInstance(a).loadConfig();
             MessagesController.getInstance(a);

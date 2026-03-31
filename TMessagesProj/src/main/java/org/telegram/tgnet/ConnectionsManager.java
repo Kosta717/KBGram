@@ -882,25 +882,41 @@ public class ConnectionsManager extends BaseController {
 
     public static void getHostByName(String hostName, long address) {
         AndroidUtilities.runOnUIThread(() -> {
-            ResolvedDomain resolvedDomain = dnsCache.get(hostName);
-            if (resolvedDomain != null && SystemClock.elapsedRealtime() - resolvedDomain.ttl < 5 * 60 * 1000) {
-                native_onHostNameResolved(hostName, address, resolvedDomain.getAddress());
-            } else {
-                ResolveHostByNameTask task = resolvingHostnameTasks.get(hostName);
-                if (task == null) {
-                    task = new ResolveHostByNameTask(hostName);
-                    try {
-                        task.executeOnExecutor(DNS_THREAD_POOL_EXECUTOR, null, null, null);
-                    } catch (Throwable e) {
-                        FileLog.e(e);
-                        native_onHostNameResolved(hostName, address, "");
-                        return;
+            if (org.telegram.messenger.DoHResolver.isEnabled()) {
+                Utilities.globalQueue.postRunnable(() -> {
+                    java.util.List<String> ips = org.telegram.messenger.DoHResolver.resolve(hostName);
+                    if (ips != null && !ips.isEmpty()) {
+                        String ip = ips.get(0);
+                        AndroidUtilities.runOnUIThread(() -> native_onHostNameResolved(hostName, address, ip));
+                    } else {
+                        AndroidUtilities.runOnUIThread(() -> executeDefaultDns(hostName, address));
                     }
-                    resolvingHostnameTasks.put(hostName, task);
-                }
-                task.addAddress(address);
+                });
+                return;
             }
+            executeDefaultDns(hostName, address);
         });
+    }
+
+    private static void executeDefaultDns(String hostName, long address) {
+        ResolvedDomain resolvedDomain = dnsCache.get(hostName);
+        if (resolvedDomain != null && SystemClock.elapsedRealtime() - resolvedDomain.ttl < 5 * 60 * 1000) {
+            native_onHostNameResolved(hostName, address, resolvedDomain.getAddress());
+        } else {
+            ResolveHostByNameTask task = resolvingHostnameTasks.get(hostName);
+            if (task == null) {
+                task = new ResolveHostByNameTask(hostName);
+                try {
+                    task.executeOnExecutor(DNS_THREAD_POOL_EXECUTOR, null, null, null);
+                } catch (Throwable e) {
+                    FileLog.e(e);
+                    native_onHostNameResolved(hostName, address, "");
+                    return;
+                }
+                resolvingHostnameTasks.put(hostName, task);
+            }
+            task.addAddress(address);
+        }
     }
 
     public static void onBytesReceived(int amount, int networkType, final int currentAccount) {

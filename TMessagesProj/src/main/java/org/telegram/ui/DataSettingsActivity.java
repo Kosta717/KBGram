@@ -99,6 +99,7 @@ public class DataSettingsActivity extends BaseFragment {
     private int proxySectionRow;
     @Keep
     private int proxyRow;
+    private int antiCensorshipRow;
     private int proxySection2Row;
     @Keep
     private int clearDraftsRow;
@@ -195,6 +196,7 @@ public class DataSettingsActivity extends BaseFragment {
         callsSection2Row = rowCount++;
         proxySectionRow = rowCount++;
         proxyRow = rowCount++;
+        antiCensorshipRow = rowCount++;
         proxySection2Row = rowCount++;
         clearDraftsRow = rowCount++;
         clearDraftsSectionRow = rowCount++;
@@ -549,6 +551,8 @@ public class DataSettingsActivity extends BaseFragment {
                 showDialog(builder.create());
             } else if (position == proxyRow) {
                 presentFragment(new ProxyListActivity());
+            } else if (position == antiCensorshipRow) {
+                showAntiCensorshipDialog();
             } else if (position == enableStreamRow) {
                 SharedConfig.toggleStreamMedia();
                 TextCheckCell textCheckCell = (TextCheckCell) view;
@@ -604,6 +608,69 @@ public class DataSettingsActivity extends BaseFragment {
         return fragmentView;
     }
 
+    private void showAntiCensorshipDialog() {
+        if (getParentActivity() == null) return;
+
+        Context ctx = getParentActivity();
+        LinearLayout layout = new LinearLayout(ctx);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(AndroidUtilities.dp(24), AndroidUtilities.dp(8), AndroidUtilities.dp(24), 0);
+
+        // DoH toggle
+        TextCheckCell dohCell = new TextCheckCell(ctx);
+        dohCell.setTextAndCheck("DNS-over-HTTPS", org.telegram.messenger.DoHResolver.isEnabled(), true);
+        dohCell.setOnClickListener(v -> {
+            boolean newVal = !org.telegram.messenger.DoHResolver.isEnabled();
+            org.telegram.messenger.DoHResolver.setEnabled(newVal);
+            dohCell.setChecked(newVal);
+        });
+        layout.addView(dohCell);
+
+        // Auto-Proxy toggle
+        TextCheckCell autoProxyCell = new TextCheckCell(ctx);
+        autoProxyCell.setTextAndCheck("Auto-Proxy on Blocking", org.telegram.messenger.CensorshipDetector.isAutoProxyEnabled(), true);
+        autoProxyCell.setOnClickListener(v -> {
+            boolean newVal = !org.telegram.messenger.CensorshipDetector.isAutoProxyEnabled();
+            org.telegram.messenger.CensorshipDetector.setAutoProxyEnabled(newVal);
+            autoProxyCell.setChecked(newVal);
+        });
+        layout.addView(autoProxyCell);
+
+        // Censorship Detector toggle
+        TextCheckCell detectorCell = new TextCheckCell(ctx);
+        detectorCell.setTextAndCheck("Censorship Detector", org.telegram.messenger.CensorshipDetector.isEnabled(), false);
+        detectorCell.setOnClickListener(v -> {
+            boolean newVal = !org.telegram.messenger.CensorshipDetector.isEnabled();
+            org.telegram.messenger.CensorshipDetector.setEnabled(newVal);
+            org.telegram.messenger.CensorshipDetector.saveSettings();
+            detectorCell.setChecked(newVal);
+        });
+        layout.addView(detectorCell);
+
+        // Status text
+        TextView statusView = new TextView(ctx);
+        statusView.setTextSize(14);
+        statusView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
+        statusView.setPadding(0, AndroidUtilities.dp(12), 0, AndroidUtilities.dp(8));
+        statusView.setText("Status: " + org.telegram.messenger.CensorshipDetector.getStatusString());
+        layout.addView(statusView);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+        builder.setTitle("KBGram Anti-Censorship");
+        builder.setView(layout);
+        builder.setPositiveButton("Check Connection", (dialog, which) -> {
+            org.telegram.messenger.CensorshipDetector.checkConnectivity();
+            if (listAdapter != null && antiCensorshipRow >= 0) {
+                AndroidUtilities.runOnUIThread(() -> rebind(antiCensorshipRow), 3000);
+            }
+        });
+        builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
+        builder.setNeutralButton("Fetch Proxies", (dialog, which) -> {
+            org.telegram.messenger.ProxyFetcher.fetchAndApplyBestProxy();
+        });
+        showDialog(builder.create());
+    }
+
     private void setStorageDirectory(String storageDir) {
         SharedConfig.storageCacheDir = storageDir;
         SharedConfig.saveConfig();
@@ -616,6 +683,7 @@ public class DataSettingsActivity extends BaseFragment {
             loadCacheSize();
         });
     }
+
 
     @Override
     protected void onDialogDismiss(Dialog dialog) {
@@ -713,7 +781,11 @@ public class DataSettingsActivity extends BaseFragment {
                         updateVoipUseLessData = false;
                     } else if (position == proxyRow) {
                         textCell.setIcon(0);
-                        textCell.setText(LocaleController.getString(R.string.ProxySettings), false);
+                        textCell.setText(LocaleController.getString(R.string.ProxySettings), true);
+                    } else if (position == antiCensorshipRow) {
+                        textCell.setIcon(0);
+                        String status = org.telegram.messenger.CensorshipDetector.isCensorshipDetected() ? "Active" : "Standby";
+                        textCell.setTextAndValue("Anti-Censorship", status, false, false);
                     } else if (position == resetDownloadRow) {
                         textCell.setIcon(0);
                         textCell.setCanDisable(true);
@@ -882,7 +954,7 @@ public class DataSettingsActivity extends BaseFragment {
         }
 
         public boolean isRowEnabled(int position) {
-            return position == mobileRow || position == roamingRow || position == wifiRow || position == storageUsageRow || position == useLessDataForCallsRow || position == dataUsageRow || position == proxyRow || position == clearDraftsRow ||
+            return position == mobileRow || position == roamingRow || position == wifiRow || position == storageUsageRow || position == useLessDataForCallsRow || position == dataUsageRow || position == proxyRow || position == antiCensorshipRow || position == clearDraftsRow ||
                     position == enableCacheStreamRow || position == enableStreamRow || position == enableAllStreamRow || position == enableMkvRow || position == quickRepliesRow || position == autoplayVideoRow || position == autoplayGifsRow ||
                     position == storageNumRow || position == saveToGalleryGroupsRow || position == saveToGalleryPeerRow || position == saveToGalleryChannelsRow || position == resetDownloadRow;
         }
