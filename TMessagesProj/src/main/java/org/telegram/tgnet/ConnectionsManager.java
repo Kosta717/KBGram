@@ -30,6 +30,7 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BaseController;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.CaptchaController;
+import org.telegram.messenger.DoHResolver;
 import org.telegram.messenger.EmuDetector;
 import org.telegram.messenger.FileLoadOperation;
 import org.telegram.messenger.FileLoader;
@@ -1138,6 +1139,24 @@ public class ConnectionsManager extends BaseController {
         }
 
         protected ResolvedDomain doInBackground(Void... voids) {
+            // KBGram: Try DoH resolution first via multi-provider resolver
+            if (DoHResolver.isEnabled()) {
+                try {
+                    java.util.List<String> dohResult = DoHResolver.resolve(currentHostName);
+                    if (dohResult != null && !dohResult.isEmpty()) {
+                        if (BuildVars.LOGS_ENABLED) {
+                            FileLog.d("KBGram.DNS: Resolved " + currentHostName + " via DoH -> " + dohResult);
+                        }
+                        return new ResolvedDomain(new ArrayList<>(dohResult), SystemClock.elapsedRealtime());
+                    }
+                } catch (Exception e) {
+                    if (BuildVars.LOGS_ENABLED) {
+                        FileLog.e("KBGram.DNS: DoH resolution failed for " + currentHostName + ", falling back", e);
+                    }
+                }
+            }
+
+            // Fallback: original Google DNS resolution
             ByteArrayOutputStream outbuf = null;
             InputStream httpConnectionStream = null;
             boolean done = false;

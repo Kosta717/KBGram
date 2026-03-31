@@ -651,9 +651,23 @@ public class DataSettingsActivity extends BaseFragment {
         TextView statusView = new TextView(ctx);
         statusView.setTextSize(14);
         statusView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
-        statusView.setPadding(0, AndroidUtilities.dp(12), 0, AndroidUtilities.dp(8));
+        statusView.setPadding(0, AndroidUtilities.dp(12), 0, AndroidUtilities.dp(4));
         statusView.setText("Status: " + org.telegram.messenger.CensorshipDetector.getStatusString());
         layout.addView(statusView);
+
+        // KBGram version info
+        TextView versionView = new TextView(ctx);
+        versionView.setTextSize(12);
+        versionView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
+        versionView.setPadding(0, AndroidUtilities.dp(4), 0, AndroidUtilities.dp(8));
+        try {
+            android.content.pm.PackageInfo pInfo = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0);
+            versionView.setText("KBGram v" + pInfo.versionName + " (" + pInfo.versionCode + ")\n" +
+                    "DNS-over-HTTPS • Auto-Proxy • Censorship Detection");
+        } catch (Exception e) {
+            versionView.setText("KBGram\nDNS-over-HTTPS • Auto-Proxy • Censorship Detection");
+        }
+        layout.addView(versionView);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
         builder.setTitle("KBGram Anti-Censorship");

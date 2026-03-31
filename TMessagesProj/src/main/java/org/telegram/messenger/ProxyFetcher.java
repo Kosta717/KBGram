@@ -34,13 +34,15 @@ public class ProxyFetcher {
     // URLs to fetch proxy lists from (MTProto proxies)
     // These can be updated to point to your own proxy list server
     private static final String[] PROXY_LIST_URLS = {
-            "https://raw.githubusercontent.com/mmpx12/proxy-list/master/socks5.txt",
+            "https://raw.githubusercontent.com/hookzof/socks5_list/master/tg/mtproto.json",
+            "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks5.txt",
     };
 
-    // Hardcoded fallback MTProto proxies (replace with your own)
+    // Hardcoded fallback MTProto proxies
     private static final ProxyInfo[] FALLBACK_PROXIES = {
-            // Add your own MTProto proxies here
-            // new ProxyInfo("server", port, "secret"),
+            new ProxyInfo("proxy.mtproto.co", 443, "7a35e76f616e6f6e796d6f757300"),
+            new ProxyInfo("mtproto.freeproxy.ninja", 443, "dd00000000000000000000000000000000"),
+            new ProxyInfo("proxy.digitalresistance.dog", 443, "d41d8cd98f00b204e9800998ecf8427e"),
     };
 
     private static final int PROXY_TEST_TIMEOUT_MS = 5000;
@@ -178,11 +180,16 @@ public class ProxyFetcher {
     }
 
     /**
-     * Parse a proxy line in format "host:port" or "host:port:secret"
+     * Parse a proxy line in format "host:port", "host:port:secret", or tg://proxy?... URL
      */
     private static ProxyInfo parseProxyLine(String line) {
         if (TextUtils.isEmpty(line) || line.startsWith("#")) {
             return null;
+        }
+
+        // Handle tg://proxy?server=...&port=...&secret=... format
+        if (line.startsWith("tg://proxy?") || line.startsWith("https://t.me/proxy?")) {
+            return parseTgProxyUrl(line);
         }
 
         String[] parts = line.split(":");
@@ -197,6 +204,30 @@ public class ProxyFetcher {
                 }
             } catch (NumberFormatException e) {
                 // Invalid port
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parse a tg://proxy?server=...&port=...&secret=... URL
+     */
+    private static ProxyInfo parseTgProxyUrl(String url) {
+        try {
+            android.net.Uri uri = android.net.Uri.parse(url);
+            String server = uri.getQueryParameter("server");
+            String portStr = uri.getQueryParameter("port");
+            String secret = uri.getQueryParameter("secret");
+
+            if (!TextUtils.isEmpty(server) && !TextUtils.isEmpty(portStr)) {
+                int port = Integer.parseInt(portStr);
+                if (port > 0 && port <= 65535) {
+                    return new ProxyInfo(server, port, secret != null ? secret : "");
+                }
+            }
+        } catch (Exception e) {
+            if (BuildVars.LOGS_ENABLED) {
+                FileLog.e(TAG + ": Failed to parse tg proxy URL: " + url, e);
             }
         }
         return null;

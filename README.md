@@ -1,39 +1,108 @@
-## Telegram messenger for Android
+# KBGram 🛡️
 
-[Telegram](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple and free.
-This repo contains the official source code for [Telegram App for Android](https://play.google.com/store/apps/details?id=org.telegram.messenger).
+**Антицензурный форк Telegram для Android**
 
-## Creating your Telegram Application
+KBGram — это модифицированная версия Telegram для Android с встроенными инструментами обхода блокировок. Разработан для пользователей в регионах, где Telegram подвергается цензуре или замедлению.
 
-We welcome all developers to use our API and source code to create applications on our platform.
-There are several things we require from **all developers** for the moment.
+## ✨ Возможности
 
-1. [**Obtain your own api_id**](https://core.telegram.org/api/obtaining_api_id) for your application.
-2. Please **do not** use the name Telegram for your app — or make sure your users understand that it is unofficial.
-3. Kindly **do not** use our standard logo (white paper plane in a blue circle) as your app's logo.
-3. Please study our [**security guidelines**](https://core.telegram.org/mtproto/security_guidelines) and take good care of your users' data and privacy.
-4. Please remember to publish **your** code too in order to comply with the licences.
+### 🔐 DNS-over-HTTPS (DoH)
+- 5 DoH-провайдеров: Google, Cloudflare, Quad9, OpenDNS, AdGuard
+- Автоматический fallback на рабочий провайдер
+- Кэширование DNS-ответов (30 мин)
+- Пред-разрешение доменов Telegram при старте
 
-### API, Protocol documentation
+### 🌐 Автоматический поиск прокси
+- Загрузка и тестирование MTProto/SOCKS5 прокси из онлайн-источников
+- Автоматический выбор лучшего прокси по задержке
+- Поддержка `tg://proxy?` и `https://t.me/proxy?` ссылок
+- Встроенные fallback MTProto-прокси
 
-Telegram API manuals: https://core.telegram.org/api
+### 🔍 Детектор блокировок
+- Мониторинг соединения с 5 дата-центрами Telegram
+- Автоматическое определение блокировки или замедления
+- Автоматическое включение прокси при обнаружении блокировки
+- Периодическая проверка (каждые 5 мин)
 
-MTproto protocol manuals: https://core.telegram.org/mtproto
+### 📱 Настройки
+В разделе **Настройки → Данные и память → Anti-Censorship** доступны:
+- Переключатель DNS-over-HTTPS
+- Переключатель автоматического прокси
+- Детектор цензуры
+- Проверка соединения
+- Ручной поиск прокси
 
-### Compilation Guide
+## 🔧 Сборка
 
-**Note**: In order to support [reproducible builds](https://core.telegram.org/reproducible-builds), this repo contains dummy release.keystore,  google-services.json and filled variables inside BuildVars.java. Before publishing your own APKs please make sure to replace all these files with your own.
+### Требования
+- Android Studio 3.4+
+- Android NDK rev. 20
+- Android SDK 35
+- JDK 1.8
 
-You will require Android Studio 3.4, Android NDK rev. 20 and Android SDK 8.1
+### Шаги
 
-1. Download the Telegram source code from https://github.com/DrKLO/Telegram ( git clone https://github.com/DrKLO/Telegram.git )
-2. Copy your release.keystore into TMessagesProj/config
-3. Fill out RELEASE_KEY_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_STORE_PASSWORD in gradle.properties to access your  release.keystore
-4.  Go to https://console.firebase.google.com/, create two android apps with application IDs org.telegram.messenger and org.telegram.messenger.beta, turn on firebase messaging and download google-services.json, which should be copied to the same folder as TMessagesProj.
-5. Open the project in the Studio (note that it should be opened, NOT imported).
-6. Fill out values in TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java – there’s a link for each of the variables showing where and which data to obtain.
-7. You are ready to compile Telegram.
+1. **Клонируйте репозиторий:**
+   ```bash
+   git clone <repository-url>
+   cd KBGram
+   ```
 
-### Localization
+2. **Получите API-ключи** (обязательно):
+   - Перейдите на https://my.telegram.org/apps
+   - Создайте новое приложение
+   - Скопируйте `api_id` и `api_hash`
+   - Вставьте значения в `TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java`:
+     ```java
+     public static int APP_ID = <ваш_api_id>;
+     public static String APP_HASH = "<ваш_api_hash>";
+     ```
 
-We moved all translations to https://translations.telegram.org/en/android/. Please use it.
+3. **Настройте подпись:**
+   - Создайте свой keystore:
+     ```bash
+     keytool -genkey -v -keystore TMessagesProj/config/release.keystore \
+       -alias kbgram -keyalg RSA -keysize 2048 -validity 10000
+     ```
+   - Обновите `gradle.properties`:
+     ```properties
+     RELEASE_KEY_PASSWORD=<ваш_пароль>
+     RELEASE_KEY_ALIAS=kbgram
+     RELEASE_STORE_PASSWORD=<ваш_пароль>
+     ```
+
+4. **Соберите APK:**
+   ```bash
+   ./gradlew :TMessagesProj_AppStandalone:assembleAfatDebug
+   ```
+   APK будет в `TMessagesProj_AppStandalone/build/outputs/apk/`
+
+### Firebase (опционально)
+Для push-уведомлений:
+1. Создайте проект на https://console.firebase.google.com/
+2. Добавьте Android-приложение с пакетом `com.kbgram.messenger`
+3. Скачайте `google-services.json` в `TMessagesProj/`
+
+## 📁 Структура проекта
+
+```
+TMessagesProj/src/main/java/org/telegram/
+├── messenger/
+│   ├── BuildVars.java           # Настройки форка
+│   ├── ApplicationLoader.java   # Инициализация антицензуры
+│   ├── DoHResolver.java         # DNS-over-HTTPS модуль
+│   ├── ProxyFetcher.java        # Автоматический поиск прокси
+│   └── CensorshipDetector.java  # Детектор блокировок
+├── tgnet/
+│   └── ConnectionsManager.java  # Интеграция DoH в сетевой стек
+└── ui/
+    └── DataSettingsActivity.java # UI настроек антицензуры
+```
+
+## 📄 Лицензия
+
+GNU General Public License v2.0 — см. [LICENSE](LICENSE)
+
+## ⚠️ Отказ от ответственности
+
+KBGram — неофициальный форк. Не имеет отношения к Telegram FZ-LLC. Используйте на свой страх и риск.
