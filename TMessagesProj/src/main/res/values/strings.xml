@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="AppName">KBGram</string>
-    <string name="AppNameBeta">KBGram Beta</string>
+    <string name="AppName">KostaGram</string>
+    <string name="AppNameBeta">KostaGram Beta</string>
     <string name="LanguageName">English</string>
     <string name="English">English</string>
     <string name="LanguageNameInEnglish">English</string>
@@ -10288,6 +10288,7 @@
     <string name="MainTabsCalls">Calls</string>
     <string name="MainTabsChats">Chats</string>
     <string name="MainTabsProfile">Profile</string>
+    <string name="MainTabsMusic">Music</string>
     <string name="MainTabsSettings">Settings</string>
     <string name="SwitchThemeToDay">Day Mode</string>
     <string name="SwitchThemeToNight">Night Mode</string>

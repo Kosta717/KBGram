@@ -12,6 +12,7 @@ import android.text.TextUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.telegram.tgnet.ConnectionsManager;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -28,8 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProxyFetcher {
 
-    private static final String TAG = "KBGram.ProxyFetcher";
-    private static final String PREFS_NAME = "kbgram_proxies";
+    private static final String TAG = "KostaGram.ProxyFetcher";
+    private static final String PREFS_NAME = "kostagr_proxies";
 
     // URLs to fetch proxy lists from (MTProto proxies)
     // These can be updated to point to your own proxy list server
@@ -301,7 +302,18 @@ public class ProxyFetcher {
                 }
 
                 // Set as current proxy
-                SharedConfig.setCurrentProxy(proxyInfo);
+                SharedConfig.currentProxy = proxyInfo;
+
+                SharedPreferences.Editor editor = MessagesController.getGlobalMainSettings().edit();
+                editor.putString("proxy_ip", proxyInfo.address);
+                editor.putString("proxy_pass", proxyInfo.password);
+                editor.putString("proxy_user", proxyInfo.username);
+                editor.putInt("proxy_port", proxyInfo.port);
+                editor.putString("proxy_secret", proxyInfo.secret);
+                editor.putBoolean("proxy_enabled", true);
+                editor.commit();
+
+                ConnectionsManager.setProxySettings(true, proxyInfo.address, proxyInfo.port, proxyInfo.username, proxyInfo.password, proxyInfo.secret);
 
                 if (BuildVars.LOGS_ENABLED) {
                     FileLog.d(TAG + ": Proxy applied: " + proxy.host + ":" + proxy.port);
