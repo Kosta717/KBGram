@@ -1,5 +1,5 @@
 /*
- * KostaGram - Censorship detection module.
+ * MuseGram - Censorship detection module.
  * Monitors connection quality and automatically switches to proxy when blocking is detected.
  */
 
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class CensorshipDetector {
 
-    private static final String TAG = "KostaGram.Censorship";
+    private static final String TAG = "MuseGram.Censorship";
     private static final String PREFS_NAME = "kostagr_censorship";
 
     // Telegram DC IP addresses for connectivity checks

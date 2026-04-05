@@ -1,5 +1,5 @@
 /*
- * KostaGram - Music Player Tab Fragment
+ * MuseGram - Music Player Tab Fragment
  * Displays audio files from Saved Messages with integrated playback controls.
  */
 

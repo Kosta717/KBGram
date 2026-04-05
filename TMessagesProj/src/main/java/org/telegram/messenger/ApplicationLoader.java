@@ -246,11 +246,13 @@ public class ApplicationLoader extends Application {
         SharedConfig.loadConfig();
         SharedPrefsHelper.init(applicationContext);
 
-        // KostaGram: Initialize anti-censorship features
+        // MuseGram: Anti-censorship disabled for now to focus on music fork
+        /*
         org.telegram.messenger.CensorshipDetector.loadSettings();
         if (org.telegram.messenger.CensorshipDetector.isEnabled()) {
             org.telegram.messenger.CensorshipDetector.checkIfNeeded();
         }
+        */
 
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
             UserConfig.getInstance(a).loadConfig();

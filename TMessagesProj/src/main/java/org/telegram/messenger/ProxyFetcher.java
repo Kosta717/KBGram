@@ -29,21 +29,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProxyFetcher {
 
-    private static final String TAG = "KostaGram.ProxyFetcher";
+    private static final String TAG = "MuseGram.ProxyFetcher";
     private static final String PREFS_NAME = "kostagr_proxies";
 
     // URLs to fetch proxy lists from (MTProto proxies)
     // These can be updated to point to your own proxy list server
     private static final String[] PROXY_LIST_URLS = {
             "https://raw.githubusercontent.com/hookzof/socks5_list/master/tg/mtproto.json",
-            "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks5.txt",
+            "https://raw.githubusercontent.com/AleksZhe/telegram-proxies/main/proxies.json"
     };
 
-    // Hardcoded fallback MTProto proxies
+    // Hardcoded fallback MTProto proxies (updated working ones)
     private static final ProxyInfo[] FALLBACK_PROXIES = {
-            new ProxyInfo("proxy.mtproto.co", 443, "7a35e76f616e6f6e796d6f757300"),
-            new ProxyInfo("mtproto.freeproxy.ninja", 443, "dd00000000000000000000000000000000"),
-            new ProxyInfo("proxy.digitalresistance.dog", 443, "d41d8cd98f00b204e9800998ecf8427e"),
+            new ProxyInfo("m.tpro.to", 443, "ee111111111111111111111111111111117777772e6d61696c2e7275"),
+            new ProxyInfo("ru.m.tpro.to", 443, "ee111111111111111111111111111111117777772e6d61696c2e7275")
     };
 
     private static final int PROXY_TEST_TIMEOUT_MS = 5000;
